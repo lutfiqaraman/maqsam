@@ -2,25 +2,32 @@ const GeoLocationService = require('./GeoLocationAPI');
 const SunLocation = require('./SunLocation');
 const DayStatus = require('./DayStatus');
 
-(async function main() {
-    const geoLocationService = new GeoLocationService();
+async function fetchLocationData() {
+    const geoService = new GeoLocationService();
+    return await geoService.getGeoLocation();
+}
 
+function printStatus({ country, lat, lon }, status) {
+    console.table([{
+        Country: country,
+        Latitude: lat.toFixed(6),
+        Longitude: lon.toFixed(6),
+        'Day Status': status
+    }]);
+}
+
+async function determineDayStatus() {
     try {
-        const geoData = await geoLocationService.getGeoLocation();
+        const location = await fetchLocationData();
+        const now = new Date();
 
-        const { country, region, lat, lon } = geoData;
-        const dateTimeNow = new Date();
+        const sunPosition = new SunLocation().calculateSunPosition(now, location.lat, location.lon);
+        const status = new DayStatus().calculateDayStatus(sunPosition);
 
-        const sunLocation = new SunLocation();
-        const sunAzimuth = sunLocation.calculateSunPosition(dateTimeNow, lat, lon);
-
-        const dayStatus = new DayStatus();
-        const status = dayStatus.calculateDayStatus(sunAzimuth);
-
-        console.log("Country".padEnd(15), "Latitude".padEnd(12), "Longitude".padEnd(12), "Day Status".padEnd(15));
-        console.log("|------------|------------|------------|------------|");
-        console.log(`| ${geoData.country.padEnd(10)} | ${geoData.lat.toFixed(6).padEnd(10)} | ${geoData.lon.toFixed(6).padEnd(10)} | ${status.padEnd(10)} |`);
+        printStatus(location, status);
     } catch (error) {
-        console.error(`Error: ${error.message}`);
+        console.error("An error occurred while determining the day status:", error);
     }
-})();
+}
+
+determineDayStatus();
