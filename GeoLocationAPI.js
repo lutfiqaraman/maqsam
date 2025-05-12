@@ -1,17 +1,32 @@
-const axios = require('axios');
+
 
 class GeoLocationAPI {
-    constructor() {
-        this.httpClient = axios;
-    }
 
     async getGeoLocation() {
         try {
             const ipAddress = await this.getPublicIPAddress();
             const url = `http://ip-api.com/json/${ipAddress}`;
+            const response = await fetch(url);
 
-            const response = await this.httpClient.get(url);
-            return response.data;
+            if (!response.ok) {
+                throw new Error(`Failed to get data. ${response.statusText}`);
+            }
+
+            let data = await response.json();
+
+            let country = data.country;
+            let region = data.regionName;
+            let lat = data.lat;
+            let lon = data.lon;
+
+
+            return {
+                country: data.country,
+                region: data.regionName,
+                lat: data.lat,
+                lon: data.lon
+            };
+
         } catch (error) {
             throw new Error(`Failed to get data. ${error.message}`);
         }
@@ -19,10 +34,17 @@ class GeoLocationAPI {
 
     async getPublicIPAddress() {
         try {
-            const response = await this.httpClient.get('https://api.ipify.org');
-            return response.data.trim();
+            const response = await fetch('https://api.ipify.org?format=json');
+
+            if (!response.ok) {
+                throw new Error(`Failed to get data. ${response.statusText}`);
+            }
+
+            let data = await response.json();
+
+            return data.ip;
         } catch (error) {
-            throw new Error("Unable to retrieve public IP address.");
+            throw new Error(`Failed to get data. ${error.message}`);
         }
     }
 }
