@@ -14,12 +14,6 @@ class GeoLocationAPI {
 
             let data = await response.json();
 
-            let country = data.country;
-            let region = data.regionName;
-            let lat = data.lat;
-            let lon = data.lon;
-
-
             return {
                 country: data.country,
                 region: data.regionName,
